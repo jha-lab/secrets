@@ -4,7 +4,7 @@
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FJHA-Lab%2Facceltran&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)
 -->
 
-SECRETS is a tool to increase the power of a clinical RCT by simulating a cross-over trial design using [Synthetic Intervention](https://arxiv.org/pdf/2006.07691.pdf). 
+SECRETS is a tool to increase the power of a clinical RCT by simulating a cross-over trial design using [Synthetic Interventions](https://arxiv.org/pdf/2006.07691.pdf). 
 
 
 ## Table of Contents
@@ -17,7 +17,10 @@ SECRETS is a tool to increase the power of a clinical RCT by simulating a cross-
 
 ## Environment setup
 
+Coming soon!
+<!--
 ### Clone this repository and initialize sub-modules
+
 
 ```shell
 git clone https://github.com/JHA-Lab/acceltran.git
@@ -26,25 +29,30 @@ git submodule init
 git submodule update
 ```
 
+
+
 ### Setup python environment  
 
+<!-- comment 
 The python environment setup is based on conda. The script below creates a new environment named `txf_design-space`:
 ```shell
 source env_setup.sh
 ```
 For `pip` installation, we are creating a `requirements.txt` file. Stay tuned!
 
+-->
 
 ## Dataset Request
 To obtain the datasets used in the paper (see details in paper), submit requests to [NINDS] (https://www.ninds.nih.gov/current-research/research-funded-ninds/clinical-research/archived-clinical-research-datasets).
 
 ## Run SECRETS
 
+Coming soon!
 
 
 ## Developer
 
-[Sayeri Lala](https://github.com/slala21021). For any questions, comments or suggestions, please reach me at [slala@princeton.edu](mailto:slala@princeton.edu).
+[Sayeri Lala](https://github.com/slala2121). For any questions, comments or suggestions, please reach me at [slala@princeton.edu](mailto:slala@princeton.edu).
 
 ## Cite this work
 
@@ -62,7 +70,7 @@ Cite our work using the following bitex entry:
 
 ## License
 
-BSD-3-Clause. 
+MIT License. 
 Copyright (c) 2024, Sayeri Lala and Jha Lab.
 All rights reserved.
 
