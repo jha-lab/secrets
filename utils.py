@@ -131,6 +131,195 @@ def get_t_test(n1,n2=None,alpha=0.05,var_equal=False,loc=0,one_sample=False,cv=N
 	return get_test_outcome
 
 
+"""
+sids: unique patient ids
+"""
+def get_data_splits(data, labels, sids, data_counter=None, size=0, debug=0, seed=0, normalize=0, train_ratio=0.7):	
+	data,labels,sids=np.copy(data),np.copy(labels),np.copy(sids)
+	if data_counter is not None: data_counter=np.copy(data_counter)
+
+	# equal-sized groups
+	min_num=min(np.sum(labels),np.sum(labels==0))
+	assert np.sum(labels)==min_num
+	assert np.sum(labels==0)==min_num
+	
+	np.random.seed(0) # fix the complete dataset
+	ind_ctrl=np.random.choice(np.where(labels==0)[0],min_num,replace=False)
+	ind_treat=np.random.choice(np.where(labels==1)[0],min_num,replace=False)
+
+	ind_keep=np.concatenate((ind_ctrl,ind_treat))
+	data,labels,sids=data[ind_keep],labels[ind_keep],sids[ind_keep]
+	if data_counter is not None: data_counter=data_counter[ind_keep]
+	
+	size=size if size else len(sids)
+
+	num_train=int(size*train_ratio) - int(size*train_ratio)%2 # correct to avoid removing data as the group should be divisible into 2 equal-sized arms
+	num_val=size-num_train
+
+	np.random.seed(seed) # randomize sampling
+
+	pids_ctrl=sids[np.random.choice(np.where(labels==0)[0],num_train//2,replace=False)]
+	pids_treat=sids[np.random.choice(np.where(labels==1)[0],num_train//2,replace=False)]
+	train_pids=np.concatenate((pids_ctrl,pids_treat))
+
+	non_train_pids=np.setdiff1d(sids,train_pids)
+	non_train_ind=np.array(list(map(lambda sid: np.where(sids==sid)[0][0], non_train_pids)))
+	non_train_labels=labels[non_train_ind]
+	assert np.array_equal(sids[non_train_ind],non_train_pids)
+
+	pids_ctrl=non_train_pids[np.random.choice(np.where(non_train_labels==0)[0],num_val//2,replace=False)]
+	pids_treat=non_train_pids[np.random.choice(np.where(non_train_labels==1)[0],num_val//2,replace=False)]
+	val_pids=np.concatenate((pids_ctrl,pids_treat))
+
+	# np.random.seed(seed) # randomize sampling
+	# orig_target_pids=sids[:] #np.unique(sids)
+
+	# np.random.shuffle(orig_target_pids)
+
+	# size=size if size else len(orig_target_pids)
+	# target_pids=orig_target_pids[:size]
+
+	# train_pids=np.random.choice(target_pids,int(0.7*len(target_pids)),replace=False)
+	# val_pids=np.setdiff1d(target_pids,train_pids)
+
+	ind_tpids=np.array(list(map(lambda s: np.where(sids==s)[0], train_pids))).squeeze()
+	ind_vpids=np.array(list(map(lambda s: np.where(sids==s)[0], val_pids))).squeeze()
+
+	train_data,val_data=data[ind_tpids],data[ind_vpids]
+	train_data_counter, val_data_counter=(data_counter[ind_tpids], data_counter[ind_vpids]) if data_counter is not None else ([],[])
+	train_labels,val_labels=labels[ind_tpids],labels[ind_vpids]
+	train_sids,val_sids=sids[ind_tpids], sids[ind_vpids]
+
+	assert np.array_equal(train_pids,train_sids)
+	assert np.array_equal(val_pids,val_sids)
+
+	assert np.allclose(len(train_data)+len(val_data),size,atol=2)
+	assert len(np.intersect1d(train_pids,val_pids))==0
+
+	if debug: 
+		print("Frac. placebo: orig: %.4f, train: %.4f, val: %.4f"\
+		  %(labels.sum()/len(labels), train_labels.sum()/len(train_labels),val_labels.sum()/len(val_labels)))
+
+	return [train_data, train_data_counter, train_labels, train_sids], [val_data, val_data_counter, val_labels, val_sids]
 
 
 
+def normalize(data, labels, scheme, normalize_by=None):
+
+	ns,nt,nf=data.shape
+
+	norm_data=np.copy(data)
+
+	scalers_by_label_type=[]
+
+	if normalize_by == "label":
+		for label_type in [0,1]:
+
+			ind_label_type=np.where(labels==label_type)[0]
+			data_label_type=norm_data[ind_label_type]
+
+			scalers=[]
+			for cfi in np.arange(nf):
+				scaler=StandardScaler() if scheme == "standard" else MinMaxScaler((0,1))
+				norm_data[ind_label_type,:,cfi]=scaler.fit_transform(data_label_type[:,:,cfi].reshape(-1,1)).reshape(len(data_label_type),-1)
+				scalers.append(scaler)
+			scalers_by_label_type.append(scalers)
+
+	elif normalize_by == "row": 
+		scalers=[]
+		for ri in np.arange(ns):
+			scaler=StandardScaler() if scheme == "standard" else MinMaxScaler((0,1))
+			norm_data[ri]=scaler.fit_transform(norm_data[ri].flatten().reshape(-1,1)).reshape(nt,nf)
+			scalers.append(scaler)
+		scalers_by_label_type.append(scalers)
+	else: # normalize across entire group
+		# print("normalize")
+		scalers=[]
+		for cfi in np.arange(nf):
+			scaler=StandardScaler() if scheme == "standard" else MinMaxScaler((0,1))
+			norm_data[:,:,cfi]=scaler.fit_transform(norm_data[:,:,cfi].reshape(-1,1)).reshape(len(norm_data),-1)
+			scalers.append(scaler)
+		scalers_by_label_type.append(scalers)
+
+	return norm_data, scalers_by_label_type
+
+
+def unnormalize(data, labels, scalers_by_label_type, normalize_by=None):
+
+
+	ns,nt,nf=data.shape
+
+	unnorm_data=np.copy(data)
+
+
+	if normalize_by == "label":
+		for label_type in [0,1]:
+
+			scalers=scalers_by_label_type[label_type]
+
+			ind_label_type=np.where(labels==label_type)[0]
+			data_label_type=unnorm_data[ind_label_type]
+
+			for cfi in np.arange(nf):
+				# technically should ignore missing but small fraction
+				# for ti in tis:
+				# 	scaler=StandardScaler()
+				# 	train_data[:,ti,cfi]=scaler.fit_transform(train_data[:,ti,cfi].reshape(-1,1)).squeeze()
+				# 	val_data[:,ti,cfi]=scaler.transform(val_data[:,ti,cfi].reshape(-1,1)).squeeze()
+				# 	scalers[cf].append(scaler)
+
+				# scaler=StandardScaler()
+				scaler=scalers[cfi]
+				unnorm_data[ind_label_type,:,cfi]=scaler.inverse_transform(data_label_type[:,:,cfi].reshape(-1,1)).reshape(len(data_label_type),-1)
+	elif normalize_by=="row":
+		scalers=scalers_by_label_type[0]
+		for ri in np.arange(ns):
+			scaler=scalers[ri]
+			unnorm_data[ri]=scaler.inverse_transform(unnorm_data[ri].flatten().reshape(-1,1)).reshape(nt,nf)
+	else:
+		# print("unnormalize")
+		scalers=scalers_by_label_type[0]
+		for cfi in np.arange(nf):
+			scaler=scalers[cfi]
+			unnorm_data[:,:,cfi]=scaler.inverse_transform(unnorm_data[:,:,cfi].reshape(-1,1)).reshape(len(unnorm_data),-1)
+
+	return unnorm_data
+
+
+
+def get_sample(data, labels, sids, arm_size, seed=0, eval_alpha=False, with_replacement=False, data_counter=None):
+
+	data,labels,sids=np.copy(data),np.copy(labels),np.copy(sids)
+	
+	if data_counter is not None: data_counter=np.copy(data_counter)
+
+	np.random.seed(seed)
+	ind_ctrl=np.where(labels==0)[0]
+	ind_treat=np.where(labels==1)[0]
+	sind_ctrl=np.random.choice(ind_ctrl,arm_size,replace=with_replacement)
+	sind_treat=np.random.choice(ind_ctrl if eval_alpha else ind_treat,arm_size,replace=with_replacement)
+	data=np.concatenate((data[sind_ctrl],data[sind_treat]))
+	labels=np.array([0]*arm_size+[1]*arm_size) # there is always a 'treated' and a 'control' arm 
+	sids=np.arange(2*arm_size) # actuals ids don't matter as long as unique i.e., get_data_splits
+	
+	# print(sind_ctrl)
+	# print(sind_treat)
+
+	if data_counter is not None: data_counter=np.concatenate((data_counter[sind_ctrl],data_counter[sind_treat]))
+
+	if data_counter is not None:
+		return data,data_counter,labels,sids
+
+	return data,labels,sids
+
+
+
+def parse_helper(inp_str):
+		if inp_str == "None":
+			return None
+		return float(inp_str)
+
+def parse_str_helper(inp_str):
+	if inp_str == "None":
+		return None
+	return inp_str

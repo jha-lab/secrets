@@ -437,22 +437,8 @@ if __name__ == "__main__":
 	parser=argparse.ArgumentParser()
 	parser=add_arguments(parser)
 	args=parser.parse_args()
-
-	# if args.topk != -1: # choose topk
-	# 	with open(os.path.join(args.path_feature_scores),"rb") as f:
-	# 		feature_scores=pickle.load(f)['scores_by_fi'][:,0]
-	# 	ind_sort=np.argsort(feature_scores)[::-1]
-	# 	feature_indices=ind_sort[:args.topk]
-	# 	args.feature_indices=",".join(feature_indices.astype(str))
-	# 	print(args.feature_indices)
 		
-	full_ds,features,ind_outcome_ft=get_dataset(args.include_extra, args.feature_indices, drop_categ=args.drop_categ)
-
-	if args.tune_cv_per_data_seed:
-		syn_ctrl.main_with_data_seeds(args, full_ds, features, ind_outcome_ft)
-	elif args.search_sample_size:
-		syn_ctrl.main_search_sample_size(args, full_ds, features, ind_outcome_ft)
-	else:
-		syn_ctrl.main(args, full_ds, features, ind_outcome_ft)
+	syn_ctrl.main_with_data_seeds(args, *get_dataset(args.include_extra, args.feature_indices, drop_categ=args.drop_categ))
+	
 
 

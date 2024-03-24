@@ -1,11 +1,5 @@
 import sys
 import os
-if 'HOSTNAME' in os.environ.keys(): # cluster
-	sys.path.append("/home/slala")
-	import rct
-	from rct.dataset import *
-else:
-	from dataset import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -497,128 +491,6 @@ def get_reject_rate(cvs, test_function, itess, num_seeds, size, use_unbiased_var
 	return o/(num_seeds)
 	
 
-
-
-def choose_arm_size(arm_sizes,alphas,powers,sample_means,null_threshold,tolerance,target_power,target_effect_size):
-	for sample_round in np.arange(len(arm_sizes)):
-		arm_size,alpha,power,sample_mean=arm_sizes[sample_round],alphas[sample_round],powers[sample_round],sample_means[sample_round]
-
-		# confident we're under the null setting
-		if sample_mean < null_threshold:
-			return arm_size 
-
-		if power >= target_power and sample_mean <= (target_effect_size + tolerance):
-			return arm_size
-
-	return arm_size
-
-def main_search_sample_size(args, full_ds, features, iof):
-
-	full_data,full_labels,full_sids=full_ds
-
-	hypothesis_setting=args.eval_alpha
-
-	ass,alphass,powerss,sample_meanss,chosen_ass=[],[],[],[],[]
-
-	data_seed_start=args.data_seed_start
-	if os.path.exists(os.path.join(args.results_path,'search_sample_size.pickle')):
-		with open(os.path.join(args.results_path,'search_sample_size.pickle'),'rb') as f:
-			res=pickle.load(f)
-			ass,alphass,powerss,sample_meanss,chosen_ass=res['ass'],res['alphass'],res['powerss'],res['sample_meanss'],res['chosen_ass']
-			data_seed_start=res['data_seed']+1
-
-	for data_seed in np.arange(data_seed_start,args.data_seed_end+1):
-		# print("data_seed: %d"%data_seed)
-		full_data_seed,full_labels_seed,full_sids_seed=get_sample(full_data,full_labels,full_sids,args.arm_size_ub,data_seed,
-																	eval_alpha=hypothesis_setting,with_replacement=1)
-		
-		arm_sizes,alphas,powers,sample_means=sweep_sample_size(args, [full_data_seed, full_labels_seed, full_sids_seed], features, iof)
-		
-		ass.append(arm_sizes)
-		alphass.append(alphas)
-		powerss.append(powers)
-		sample_meanss.append(sample_means)
-		chosen_ass.append(choose_arm_size(arm_sizes,alphas,powers,sample_means,args.null_threshold,args.tolerance,args.target_power,args.target_effect_size))
-		
-	# ass,alphass,powerss,sample_meanss,chosen_ass=np.array(ass),np.array(alphass),np.array(powerss),np.array(sample_meanss),np.array(chosen_ass)
-
-	with open(os.path.join(args.results_path,'search_sample_size.pickle'),'wb') as f:
-		pickle.dump({'data_seed':data_seed,'ass':ass,'alphass':alphass,'powerss':powerss,'sample_meanss':sample_meanss,'chosen_ass':chosen_ass},f)
-
-
-
-def sweep_sample_size(args, full_ds, features, iof):
-
-	full_data,full_labels,full_sids=full_ds
-
-	main_results_path=args.results_path
-
-	args.seed_start,args.seed_end=0,args.num_tune_seeds
-
-	arm_sizes=np.arange(args.arm_size_lb,args.arm_size_ub,args.arm_size_step)
-	alphas,powers,sample_means=[],[],[]
-	data,labels,sids=None,None,None
-	for sampling_round, arm_size in enumerate(arm_sizes):
-		# accrue samples 
-		if data is not None:
-			new_data,new_labels,_=get_sample(full_data,full_labels,full_sids,args.arm_size_step,seed=sampling_round,
-												eval_alpha=False,with_replacement=True)
-			data,labels=np.concatenate([data,new_data]),np.concatenate([labels,new_labels])
-		else: # init
-			new_data,new_labels,_=get_sample(full_data,full_labels,full_sids,args.arm_size_lb,seed=sampling_round,
-												eval_alpha=False,with_replacement=True)
-			data,labels=np.copy(new_data),np.copy(new_labels)
-
-		# print(arm_size, data.shape, labels.shape)
-
-		sids=np.arange(len(data))
-
-		# estimate alpha, beta through proposed bootstrapping
-		args.arm_size=arm_size
-
-		args.eval_alpha=1
-		threshold,alpha,itess=main(args,[data,labels,sids],features,iof,False,False)
-		
-		args.eval_alpha=0
-		_,_,itess=main(args,[data,labels,sids],features,iof,False,False)
-
-		test_function=partial(get_t_test,n1=2*arm_size,one_sample=True,cv=threshold)
-		power=cv.get_reject_rate(threshold,test_function,itess,args.num_tune_seeds,2*arm_size,args.use_unbiased_var)
-
-		# estimate the CATE from the current dataset
-		sample_mean,sample_var=get_ate_from_ite(data,labels,sids,
-												arm_size=-1,seed=-1,ind_outcome_ft=iof,
-												eval_alpha=-1, 
-												normalize_flag=args.normalize, model_type=args.model_type, model_kwargs={}, 
-												normalize_scheme=args.normalize_scheme,normalize_by=args.normalize_by,
-												outcome_type=args.outcome_type,
-												use_unbiased_var=args.use_unbiased_var
-												)[:2]
-		# orig_sample_mean=sample_mean
-		sample_mean=abs(sample_mean) # 2-sided testing
-
-		alphas.append(alpha)
-		powers.append(power)
-		sample_means.append(sample_mean)
-
-		# if args.target_effect_size <= sample_mean + args.tolerance and args.target_effect_size >= sample_mean - args.tolerance:
-		# 	if power >= (1-args.target_beta):
-		# 		return np.array(arm_sizes), np.array(alphas), np.array(powers), np.array(sample_means)
-
-		# elif args.terminate_early: 
-		# 	# unlikely that increasing sample size will detect larger treatment effect
-		# 	if power >= (1-args.target_beta) and (sample_mean < args.target_effect_size-args.tolerance):
-		# 		return return np.array(arm_sizes), np.array(alphas), np.array(powers), np.array(sample_means)
-
-
-	return arm_sizes, np.array(alphas), np.array(powers), np.array(sample_means)
-
-		
-
-
-
-
-
 def main_with_data_seeds(args, full_ds, features, ind_outcome_ft):
 	full_data,full_labels,full_sids=full_ds
 
@@ -1013,8 +885,8 @@ def add_arguments(parser):
 	parser.add_argument('--outcome_type',type=str,default='delta')
 	parser.add_argument('--use_unbiased_var',type=int,default=1)
 
-	parser.add_argument('--tune_cv_per_data_seed',type=int,default=0)
-	parser.add_argument('--num_tune_seeds',type=int,default=100)
+	parser.add_argument('--tune_cv_per_data_seed',type=int,default=1)
+	parser.add_argument('--num_tune_seeds',type=int,default=1000)
 	parser.add_argument('--data_seed_start',type=int,default=-1)
 	parser.add_argument('--data_seed_end',type=int,default=-1)
 	
@@ -1022,16 +894,6 @@ def add_arguments(parser):
 	parser.add_argument('--cvu',type=int,default=5)
 	parser.add_argument('--num_search_samples',type=int,default=10)
 	parser.add_argument('--err_threshold',type=float,default=1e-3)
-
-	# search parameters
-	parser.add_argument('--search_sample_size',type=int,default=0)
-	parser.add_argument('--target_power',type=float,default=0.8)
-	parser.add_argument('--arm_size_lb',type=int,default=5)
-	parser.add_argument('--arm_size_ub',type=int,default=100)
-	parser.add_argument('--arm_size_step',type=int,default=10)
-	parser.add_argument('--target_effect_size',type=float,default=-1)
-	parser.add_argument('--null_threshold',type=float,default=0)
-	parser.add_argument('--tolerance',type=float,default=0)
 
 
 	# data
