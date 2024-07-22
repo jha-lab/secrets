@@ -22,7 +22,7 @@ Download these into the datasets directory.
 
 ## Run SECRETS
 
-From the secrets directory, run the following command. This will launch jobs on slurm to run SECRETS on the MGTX dataset. 
+From the secrets directory, run the following command. This will launch jobs using slurm to run SECRETS on the MGTX dataset. 
 See comments within files to adapt script for experiments.
 
 ```shell
