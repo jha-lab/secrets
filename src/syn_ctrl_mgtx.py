@@ -6,7 +6,10 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import os
 from collections import OrderedDict
 import argparse
-import syn_ctrl
+import sys
+sys.path.append("..")
+import src
+from src import syn_ctrl
 import pickle
 
 
@@ -23,8 +26,10 @@ VARS_NUMERICAL=[
 
 
 def get_cache_dir():
-	path_prefix="./datasets"
-	if os.path.exists('/scratch/gpfs/slala/datasets'):
+	path_prefix="../datasets"
+	if os.path.exists(path_prefix):
+		pass
+	elif os.path.exists('/scratch/gpfs/slala/datasets'):
 		path_prefix='/scratch/gpfs/slala/datasets'
 	elif os.path.exists('/scratch/network/slala/datasets'):
 		path_prefix='/scratch/network/slala/datasets'
@@ -209,7 +214,8 @@ def get_complete_mgtx_dataset():
 
 	def load_data(data_type):
 		try:
-			return pd.read_sas(os.path.join("datasets/MGTX",data_type+".sas7bdat"))
+			# print("rdg")
+			return pd.read_sas(os.path.join("../datasets/MGTX",data_type+".sas7bdat"))
 		except Exception:
 			if os.path.exists('/scratch/network'):
 				return pd.read_sas(os.path.join("/scratch/network/slala/datasets/MGTX",data_type+".sas7bdat"))
@@ -438,7 +444,11 @@ if __name__ == "__main__":
 	parser=add_arguments(parser)
 	args=parser.parse_args()
 		
-	syn_ctrl.main_with_data_seeds(args, *get_dataset(args.include_extra, args.feature_indices, drop_categ=args.drop_categ))
+	full_ds,features,ind_outcome_ft=get_dataset(args.include_extra, args.feature_indices, drop_categ=args.drop_categ)
 	
+	if args.tune_cv_per_data_seed:
+		syn_ctrl.main_with_data_seeds(args, full_ds, features, ind_outcome_ft)
+	else:
+		syn_ctrl.main(args, full_ds, features, ind_outcome_ft)
 
 

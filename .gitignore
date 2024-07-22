@@ -1,5 +1,3 @@
 *ipynb
 __pycache__
 *.ipynb_checkpoints
-gen_job_*
-analysis.py

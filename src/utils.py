@@ -1,6 +1,12 @@
 from scipy.stats import norm, t
 import numpy as np
 import math
+import pandas as pd 
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+# import time
+import os
+from collections import OrderedDict
 
 
 """

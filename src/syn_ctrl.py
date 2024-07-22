@@ -19,13 +19,9 @@ import os, shutil
 
 from types import SimpleNamespace
 
-from utils import *
-
-import torch
-from torch import nn
-from torch import optim
-from torch import utils
-from torch.utils.data import DataLoader, TensorDataset
+sys.path.append("..")
+import src
+from src.utils import *
 
 import pickle
 
@@ -35,7 +31,7 @@ import scipy.integrate
 
 import pandas as pd
 
-import critical_value as cv
+from src import critical_value as cv
 
 from types import SimpleNamespace
 
@@ -793,14 +789,14 @@ def main(args, full_ds, features, ind_outcome_ft, print_results=True, save_resul
 		print("test accuracy: si: %.2f"%(np.sum(test_outcome_si==true_outcome)/len(test_outcome_si)))
 		print("test_accuracy: standard: %.2f"%(np.sum(test_outcome_naive==true_outcome)/len(test_outcome_naive)))
 
-		print("ATE RMSE (across all seeds): si %.3f" %si_rmse)
-		print("ATE RMSE : standard %.3f" %naive_rmse)
+		# print("ATE RMSE (across all seeds): si %.3f" %si_rmse)
+		# print("ATE RMSE : standard %.3f" %naive_rmse)
 
-		print("abs(si_ate): %.3f +/- %.3f"%(np.mean(abs(si_ates)), np.std(abs(si_ates))))
-		print("abs(standard_ate): %.3f +/- %.3f" %(np.mean(abs(naive_ates)), np.std(abs(naive_ates))))
+		# print("abs(si_ate): %.3f +/- %.3f"%(np.mean(abs(si_ates)), np.std(abs(si_ates))))
+		# print("abs(standard_ate): %.3f +/- %.3f" %(np.mean(abs(naive_ates)), np.std(abs(naive_ates))))
 
-		if args.eval_alpha:
-			print("critical_value: %.3f, empirical alpha: %.5f"%(threshold,emp_alpha))
+		# if args.eval_alpha:
+		# 	print("critical_value: %.3f, empirical alpha: %.5f"%(threshold,emp_alpha))
 
 	if save_results:
 		with open(os.path.join(args.results_path,'res_true_outcome_%s.pickle'%true_outcome), 'wb') as f:
@@ -834,21 +830,6 @@ def main(args, full_ds, features, ind_outcome_ft, print_results=True, save_resul
 	val_r2s=np.array([val_ctrl_r2s,val_treat_r2s])
 	baseline_r2s=np.array([baseline_ctrl_r2s,baseline_treat_r2s])
 	train_r2s,val_r2s,baseline_r2s=np.array(train_r2s),np.array(val_r2s),np.array(baseline_r2s)
-
-	if print_results:
-		for j,r2s in enumerate([train_r2s,val_r2s,baseline_r2s]):
-			
-			print("train" if j==0 else ("val" if j==1 else "baseline"))
-
-			for i in range(2):
-				r2i=r2s[i]
-				
-				title="frac. pos r2: %.2f\n, avg. r2 (r2>0) %.3f +/- %.3f\n, avg. r2 (r2<=0) %.3f +/- %.3f"\
-					%(r2i[r2i>0].sum()/len(r2i), np.mean(r2i[r2i>0]), np.std(r2i[r2i>0]), np.mean(r2i[r2i<=0]), np.std(r2i[r2i<=0]))
-
-				print("%s : %s" %("ctrl" if i==0 else "treat", title))
-
-		print("\n\n")
 
 
 	# return itess, val_ctrl_r2s, val_treat_r2s, train_ctrl_r2s, train_treat_r2s, baseline_ctrl_r2s, baseline_treat_r2s
@@ -885,7 +866,7 @@ def add_arguments(parser):
 	parser.add_argument('--outcome_type',type=str,default='delta')
 	parser.add_argument('--use_unbiased_var',type=int,default=1)
 
-	parser.add_argument('--tune_cv_per_data_seed',type=int,default=1)
+	parser.add_argument('--tune_cv_per_data_seed',type=int,default=0)
 	parser.add_argument('--num_tune_seeds',type=int,default=1000)
 	parser.add_argument('--data_seed_start',type=int,default=-1)
 	parser.add_argument('--data_seed_end',type=int,default=-1)
@@ -910,11 +891,11 @@ def add_arguments(parser):
 
 	# SI
 	parser.add_argument('--train',type=int,default=0)
-	parser.add_argument('--model_type',type=parse_str_helper,default="LinearRegression")
+	parser.add_argument('--model_type',type=parse_str_helper,default="Ridge")
 	parser.add_argument('--use_pcr',type=int,default=0)
 	parser.add_argument('--reg',type=float,default=0)
-	parser.add_argument('--normalize',type=int,default=0)
-	parser.add_argument('--normalize_scheme',type=str,default="standard")
+	parser.add_argument('--normalize',type=int,default=1)
+	parser.add_argument('--normalize_scheme',type=str,default="min_max")
 	parser.add_argument('--normalize_by',type=parse_str_helper,default=None)
 	parser.add_argument('--fit_intercept',type=int,default=0)
 	

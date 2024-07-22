@@ -1,9 +1,5 @@
 # SECRETS: Subject-Efficient Clinical Randomized Controlled Trials using Synthetic Intervention
 
-<!-- comment 
-![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FJHA-Lab%2Facceltran&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)
--->
-
 SECRETS is a tool to increase the power of a clinical RCT by simulating a cross-over trial design using [Synthetic Interventions](https://arxiv.org/pdf/2006.07691.pdf). 
 
 
@@ -17,37 +13,24 @@ SECRETS is a tool to increase the power of a clinical RCT by simulating a cross-
 
 ## Environment setup
 
-Coming soon!
-<!--
-### Clone this repository and initialize sub-modules
-
-
-```shell
-git clone https://github.com/JHA-Lab/acceltran.git
-cd ./acceltran/
-git submodule init
-git submodule update
-```
-
-
-
-### Setup python environment  
-
-<!-- comment 
-The python environment setup is based on conda. The script below creates a new environment named `txf_design-space`:
-```shell
-source env_setup.sh
-```
-For `pip` installation, we are creating a `requirements.txt` file. Stay tuned!
-
--->
+To setup the python environment with `pip`, see the `requirements.txt` file. 
 
 ## Dataset Request
 To obtain the datasets used in the paper (see details in paper), submit requests to [NINDS] (https://www.ninds.nih.gov/current-research/research-funded-ninds/clinical-research/archived-clinical-research-datasets).
 
+Download these into the datasets directory.
+
 ## Run SECRETS
 
-Coming soon!
+From the secrets directory, run the following command. This will launch jobs on slurm to run SECRETS on the MGTX dataset. 
+See comments within files to adapt script for experiments.
+
+```shell
+cd scripts
+./gen_job_slurm_mgtx.sh
+```
+
+To run SECRETS on other datasets (e.g., CHAMP, ICARE), use the respective scripts or follow the template of gen_job_slurm_mgtx.* and syn_ctrl_mgtx.py to run on new datasets.
 
 
 ## Developer
@@ -60,9 +43,8 @@ Cite our work using the following bitex entry:
 ```bibtex
 @article{lala2024secrets,
   title={SECRETS: Subject-efficient clinical randomized controlled trials using synthetic intervention},
-  author={Lala, Sayeri and Jha, Niraj K},
+  author={Lala, Sayeri and Jha, Niraj K.},
   journal={Contemporary Clinical Trials Communications},
-  pages={101265},
   year={2024},
   publisher={Elsevier}
 }
@@ -70,7 +52,6 @@ Cite our work using the following bitex entry:
 
 ## License
 
-MIT License. 
 Copyright (c) 2024, Sayeri Lala and Jha Lab.
 All rights reserved.
 

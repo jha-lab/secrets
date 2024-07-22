@@ -3,8 +3,10 @@ import numpy as np
 import os
 import pickle
 import argparse
-import syn_ctrl
-import utils 
+import sys 
+sys.path.append("..")
+import src
+from src import syn_ctrl
 from collections import OrderedDict
 from dataset import parse_str_helper
 
@@ -63,7 +65,7 @@ VARS_NUMERICAL=[
 
 def load_data(data_type):
 	data_dir='datasets/CHAMP/CHAMP Study Shared Data Sets and Data Dictionary/CHAMP Study Shared Data Sets'
-	prefix_data_dir="."
+	prefix_data_dir="../"
 	if os.path.exists(os.path.join("/scratch/network/slala")):
 		prefix_data_dir=os.path.join("/scratch/network/slala")
 	elif os.path.exists(os.path.join("/scratch/gpfs/slala")):
@@ -73,8 +75,10 @@ def load_data(data_type):
 
 
 def get_dataset_dir():
-	path_prefix="./datasets"
-	if os.path.exists('/scratch/gpfs/slala/datasets'):
+	path_prefix="../datasets"
+	if os.path.exists(path_prefix):
+		pass
+	elif os.path.exists('/scratch/gpfs/slala/datasets'):
 		path_prefix='/scratch/gpfs/slala/datasets'
 	elif os.path.exists('/scratch/network/slala/datasets'):
 		path_prefix='/scratch/network/slala/datasets'
@@ -82,8 +86,10 @@ def get_dataset_dir():
 	return os.path.join(path_prefix,"CHAMP/CHAMP Study Shared Data Sets and Data Dictionary/CHAMP Study Shared Data Sets")
 
 def get_cache_dir():
-	path_prefix="./datasets"
-	if os.path.exists('/scratch/gpfs/slala/datasets'):
+	path_prefix="../datasets"
+	if os.path.exists(path_prefix):
+		pass
+	elif os.path.exists('/scratch/gpfs/slala/datasets'):
 		path_prefix='/scratch/gpfs/slala/datasets'
 	elif os.path.exists('/scratch/network/slala/datasets'):
 		path_prefix='/scratch/network/slala/datasets'

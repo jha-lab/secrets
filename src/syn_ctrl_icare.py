@@ -3,7 +3,8 @@ import numpy as np
 import os
 import pickle
 import argparse
-import syn_ctrl
+sys.path.append("..")
+from src import syn_ctrl
 
 
 
@@ -132,7 +133,9 @@ VARS_NUMERICAL_IGNORE=[
 ]
 
 def get_cache_dir():
-	path_prefix="./datasets"
+	path_prefix="../datasets"
+	if os.path.exists(path_prefix):
+		pass
 	if os.path.exists('/scratch/gpfs/slala/datasets'):
 		path_prefix='/scratch/gpfs/slala/datasets'
 	elif os.path.exists('/scratch/network/slala/datasets'):
@@ -141,8 +144,10 @@ def get_cache_dir():
 
 
 def get_complete_dataset(outcome_metric="FD4Q8_CO"):
-	path_prefix="./datasets"
-	if os.path.exists('/scratch/gpfs/slala/datasets'):
+	path_prefix="../datasets"
+	if os.path.exists(path_prefix):
+		pass
+	elif os.path.exists('/scratch/gpfs/slala/datasets'):
 		path_prefix='/scratch/gpfs/slala/datasets'
 	elif os.path.exists('/scratch/network/slala/datasets'):
 		path_prefix='/scratch/network/slala/datasets'
@@ -357,7 +362,7 @@ def get_dataset(outcome_metric="FD4Q8_CO",
 def add_arguments(parser):
 	parser.add_argument('--drop_categ',type=int,default=1)
 	parser.add_argument('--drop_extra_numerical',type=int,default=1)
-	parser.add_argument('--outcome_metric',type=str,default="FD4Q8_CO")
+	parser.add_argument('--outcome_metric',type=str,default="max_sfMore_N")
 
 	syn_ctrl.add_arguments(parser)
 	return parser

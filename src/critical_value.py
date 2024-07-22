@@ -2,7 +2,10 @@ import pickle
 import os
 import numpy as np
 import argparse
-from utils import get_t_test
+import sys
+sys.path.append("..")
+import src
+from src.utils import get_t_test
 from functools import partial
 from scipy.stats import t, bootstrap
 import scipy.stats
@@ -240,7 +243,7 @@ def add_arguments(parser):
 	parser.add_argument('--arm_size',type=int)
 	parser.add_argument('--eval_alpha_0',type=int,default=1)
 	parser.add_argument('--use_unbiased_var',type=int,default=1)
-	parser.add_argument('--use_data_seed_cvs',type=int,default=0)
+	parser.add_argument('--use_data_seed_cvs',type=int,default=1)
 	parser.add_argument('--load_data_seed_cvs',type=int,default=1)
 	parser.add_argument('--num_bootstraps',type=int,default=1000) # deprecated
 	parser.add_argument('--data_seed_start',type=int,default=-1)
