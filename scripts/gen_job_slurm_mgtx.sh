@@ -108,37 +108,37 @@ mkdir -p $results_path_prefix
 
 
 # estimate_ITEs across the trials, for both control/treatment arms (indexed by eval_alpha)
-# for eval_alpha in $(seq 0 1)
-# do
-# 	results_path=$results_path_prefix/eval_alpha_${eval_alpha}
+for eval_alpha in $(seq 0 1)
+do
+	results_path=$results_path_prefix/eval_alpha_${eval_alpha}
 
-# 	mkdir -p $results_path
+	mkdir -p $results_path
 
-# 	python gen_job_slurm_mgtx.py \
-# 	--results_path $results_path \
-# 	--num_workers $num_workers \
-# 	--mem_per_cpu $mem_per_cpu \
-# 	--gpus $gpus \
-# 	--time $time \
-# 	--module_name $module_name \
-# 	--conda_env $conda_env \
-# 	--eval_alpha $eval_alpha \
-# 	--outcome_type $outcome_type \
-# 	--use_unbiased_var $use_unbiased_var \
-# 	--seed_start $seed_start \
-# 	--seed_end $seed_end \
-# 	--arm_size $arm_size \
-# 	--use_mp $use_mp \
-# 	--num_checkpoints $num_checkpoints \
-# 	--print_every $print_every \
-# 	2> $results_path/gen_job_slurm.err 1> $results_path/gen_job_slurm.out
+	python gen_job_slurm_mgtx.py \
+	--results_path $results_path \
+	--num_workers $num_workers \
+	--mem_per_cpu $mem_per_cpu \
+	--gpus $gpus \
+	--time $time \
+	--module_name $module_name \
+	--conda_env $conda_env \
+	--eval_alpha $eval_alpha \
+	--outcome_type $outcome_type \
+	--use_unbiased_var $use_unbiased_var \
+	--seed_start $seed_start \
+	--seed_end $seed_end \
+	--arm_size $arm_size \
+	--use_mp $use_mp \
+	--num_checkpoints $num_checkpoints \
+	--print_every $print_every \
+	2> $results_path/gen_job_slurm.err 1> $results_path/gen_job_slurm.out
 
-# 	slurm_job_id=$(sbatch $results_path/job.slurm)
-# 	# echo $slurm_job_id
-# 	slurm_job_file="${results_path}/slurm_job_id.txt"
-# 	# echo "$slurm_job_id" > "$slurm_job_file" 
-# 	# echo $slurm_job_file 
-# done 
+	slurm_job_id=$(sbatch $results_path/job.slurm)
+	# echo $slurm_job_id
+	slurm_job_file="${results_path}/slurm_job_id.txt"
+	# echo "$slurm_job_id" > "$slurm_job_file" 
+	# echo $slurm_job_file 
+done 
 
 
 
@@ -212,8 +212,8 @@ python gen_job_slurm_critical_value.py \
 	--data_seed_end $seed_end \
 2> $cv_results_path/gen_job_slurm.err 1> $cv_results_path/gen_job_slurm.out
 
+# slurm_job_id=$(sbatch $cv_results_path/job.slurm)
 slurm_job_id=$(sbatch -d afterok:${job_ids[0]}:${job_ids[1]} $cv_results_path/job.slurm)
-# slurm_job_id=$(sbatch -d afterok:$slurm_job_id $cv_results_path/job.slurm)
 # echo $slurm_job_id
 slurm_job_file="${cv_results_path}/slurm_job_id.txt"
 # echo "$slurm_job_id" > "$slurm_job_file" 
