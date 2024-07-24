@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pickle
 import argparse
+import sys
 sys.path.append("..")
 from src import syn_ctrl
 

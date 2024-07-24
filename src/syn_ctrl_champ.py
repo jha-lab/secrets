@@ -8,7 +8,6 @@ sys.path.append("..")
 import src
 from src import syn_ctrl
 from collections import OrderedDict
-from dataset import parse_str_helper
 
 
 
@@ -334,7 +333,10 @@ def get_dataset(missing_method="drop",missing_threshold=None,
 	return [full_data[:,:,feature_indices],full_labels,full_sids],features[feature_indices],iof
 
 
-
+def parse_str_helper(inp_str):
+	if inp_str == "None":
+		return None
+	return inp_str
 
 
 

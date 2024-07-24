@@ -1,5 +1,6 @@
 import argparse
 import os 
+import sys
 sys.path.append("..")
 import src
 from src import syn_ctrl_champ
